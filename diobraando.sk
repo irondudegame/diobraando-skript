@@ -1,0 +1,911 @@
+aliases:
+    netherite scrap = minecraft:netherite_scrap
+    netherite ingot = minecraft:netherite_ingot
+    netherite sword = minecraft:netherite_sword
+
+on skript load:
+    make console execute "/forcerecipe"
+
+command /forcerecipe:
+    permission: op and console
+    trigger:
+        register new shapeless recipe for wooden sword named "Bludgeon" using iron ingot, oak planks, iron ingot, iron ingot, oak planks, iron ingot, air, stick, air
+        register new shapeless recipe for iron bars named "Spikes" using air, iron ingot, air, air, iron sword, air, air, air, air
+        set {_mithril} to netherite scrap named "Mithril Scrap"
+        register new shapeless recipe for {_mithril} using air, air, air, air, netherite ingot, air, air, coal, air
+        register new shapeless recipe for iron ingot named "Rusted Mithril Ingot" using iron ingot, iron ingot, iron ingot, iron ingot, iron ingot named "Mithril Scrap", iron ingot, iron ingot, iron ingot, iron ingot
+        register new shapeless recipe for iron ingot named "Mithril Ingot" using air, iron ingot named "Rusted Mithril Ingot", air, air, flint, air, air, air, air
+        register new shaped recipe for netherite sword named "Mithril Sword" using air, iron ingot named "Mithril Ingot", air, air, iron ingot named "Mithril Ingot", air, air, stick, air
+
+on first join:
+    set {race::%player%} to "human"
+
+    # step 1: add stat here
+    set {resistance::%player%} to 0
+    set {strength::%player%} to 0
+    set {speed::%player%} to 0
+    set {archery::%player%} to 0
+    set {arcp::%player%} to 0
+    set {killp::%player%} to 0
+    set {resp::%player%} to 0
+
+
+    set {firstjoin::%player%} to now
+    set {stunned::%player%} to false
+    set {magic::%player%} to 0
+    set {magicp::%player%} to 0
+
+every 1 second:
+    loop all players:
+        if loop-value's tool is a bow:
+            if {archery::%loop-value%} is less than 1:
+                disenchant the loop-value's tool
+            else if {archery::%loop-value%} is less than 5:
+                enchant the loop-value's tool with power 1
+            else if {archery::%loop-value%} is less than 10:
+                enchant the loop-value's tool with power 2
+
+on shoot:
+    if shooter is a player:
+        chance of (10*{archery::%shooter%})%:
+            set {_loc} to shooter's location
+            shoot an arrow from {_loc} at speed 5
+
+on death:
+    if damage cause is projectile:
+        if victim is a player:
+            if attacker is a player:
+                if {arcp::%attacker%} is 2:
+                    send "&lArchery points&a +1" to attacker
+                    set {arcp::%attacker%} to 0
+                    add 0.1 to {archery::%attacker%}
+                else:
+                    add 1 to {arcp::%attacker%}
+
+on death:
+    if victim is a player:
+        # step 2: add stat here
+        if {resistance::%victim%} is less than 0.1:
+            set {resistance::%victim%} to 0
+        else:
+            subtract 0.1 from {resistance::%victim%}
+        if {strength::%victim%} is less than 0.1:
+            set {strength::%victim%} to 0
+        else:
+            subtract 0.1 from {strength::%victim%}
+        if {speed::%victim%} is less than 0.1:
+            set {speed::%victim%} to 0
+        else:
+            subtract 0.1 from {speed::%victim%}
+        if {archery::%victim%} is less than 0.1:
+            set {archery::%victim%} to 0
+        else:
+            subtract 0.1 from {archery::%victim%}
+
+
+
+        if {stunned::%victim%} is true:
+            send "&lTotal death!" to victim
+            make victim execute "/tdconfirm"
+        else:
+            set victim's gamemode to spectator
+            if player is not op:
+                clear player's inventory
+            set {_count} to 30
+            while {_count} is greater than 0:
+                send "&l&aSeconds until respawn: &c&l%{_count}%" to victim
+                subtract 1 from {_count}
+                wait 1 second
+            teleport the victim to {respawnpoint}
+            set victim's gamemode to survival
+
+    if attacker is a player:
+        if damage cause is not projectile:
+            if victim is a player:
+                send "&lKill points&a +4" to attacker
+                if {killp::%attacker%} is greater or equal to 6:
+                    add 4 to {killp::%attacker%}
+                    add 0.1 to {strength::%attacker%}
+                    set {killp::%attacker%} to mod({killp::%attacker%},10)
+                else:
+                    add 4 to {killp::%attacker%}
+            else:
+                send "&lKill points&a +1" to attacker
+                if {killp::%attacker%} is greater or equal to 9:
+                    add 1 to {killp::%attacker%}
+                    add 0.1 to {strength::%attacker%}
+                    set {killp::%attacker%} to mod({killp::%attacker%},10)
+                else:
+                    add 1 to {killp::%attacker%}
+
+command /setrespawnpoint:
+    permission: op
+    trigger:
+        set {respawnpoint} to player's location
+
+on join:
+    add player to {players::*}
+    set {td::%player%} to false
+    if {race::%player%} is not set:
+        set {race::%player%} to "human"
+
+    # step 3: add stat here
+    if {resistance::%player%} is not set:
+        set {resistance::%player%} to 0
+    if {strength::%player%} is not set:
+        set {strength::%player%} to 0
+    if {killp::%player%} is not set:
+        set {killp::%player%} to 0
+    if {resp::%player%} is not set:
+        set {resp::%player%} to 0
+    if {firstjoin::%player%} is not set:
+        set {firstjoin::%player%} to now
+    if {stunned::%player%} is not set:
+        set {stunned::%player%} to false
+    if {speed::%player%} is not set:
+        set {speed::%player%} to 0
+    if {archery::%player%} is not set:
+        set {archery::%player%} to 0
+    if {arcp::%player%} is not set:
+        set {arcp::%player%} to 0
+    if {magic::%player%} is not set:
+        set {magic::%player%} to 0
+    if {magicp::%player%} is not set:
+        set {magicp::%player%} to 0
+
+    if {spell::%player%} is not set:
+        set {spell::%player%} to "default"
+
+
+on quit:
+    remove player from {players::*}
+
+every 1 second:
+    loop all players:
+        if {race::%loop-value%} is "dwarf":
+            if {resistance::%loop-value%} is greater than 14:
+                set {resistance::%loop-value%} to 14
+        else:
+            if {resistance::%loop-value%} is greater than 10:
+                set {resistance::%loop-value%} to 10
+
+        if {race::%loop-value%} is "orc":
+            if {strength::%loop-value%} is greater than 12:
+                set {strength::%loop-value%} to 12
+        else:
+            if {strength::%loop-value%} is greater than 10:
+                set {strength::%loop-value%} to 10
+
+
+        if {strength::%loop-value%} is less than 0:
+            set {strength::%loop-value%} to 0
+        if {resistance::%loop-value%} is less than 0:
+            set {resistance::%loop-value%} to 0
+        if {speed::%loop-value%} is less than 0:
+            set {speed::%loop-value%} to 0
+        if {archery::%loop-value%} is less than 0:
+            set {archery::%loop-value%} to 0
+
+on damage:
+    if attacker is a player:
+        set {_dam} to damage*({strength::%attacker%}+1)
+    if victim is a player:
+        set {_dam} to damage/({resistance::%victim%}+1)
+    set damage to (round({_dam}*2))/2
+
+on damage of a player:
+    set {_addamount} to floor(damage/4)
+    if {_addamount} is greater than 0:
+        send "&lRes points&a +%{_addamount}%" to victim
+    if {resp::%victim%} + {_addamount} is greater than 10:
+        add {_addamount} to {resp::%victim%}
+        add 0.2 to {resistance::%victim%}
+        set {resp::%victim%} to mod({resp::%victim%},5)
+    else if {resp::%victim%} + {_addamount} is greater than 5:
+        add {_addamount} to {resp::%victim%}
+        add 0.1 to {resistance::%victim%}
+        set {resp::%victim%} to mod({resp::%victim%},5)
+    else:
+        add {_addamount} to {resp::%victim%}
+
+    if attacker's tool is wooden sword or stone axe:
+        if name of attacker's tool is "Bludgeon" or "Masse":
+            chance of ((5+{strength::%attacker%}-{resistance::%victim%})*20/3)%:
+                broadcast "&l%victim% was stunned by %attacker%!"
+                set {stunned::%victim%} to true
+                apply slowness 4 to the victim for 10 seconds
+                apply weakness 1 to the victim for 10 seconds
+                apply nausea 1 to the victim for 10 seconds
+                apply blindness 1 to the victim for 10 seconds
+                wait 10 seconds
+                set {stunned::%victim%} to false
+                broadcast "&l%victim% is no longer stunned!"
+
+    if name of attacker's tool is "Masse":
+        chance of 50%:
+            set slot 40 of victim's inventory to air
+
+command /stats [<player>]:
+    trigger:
+        if arg 1 is not set:
+            make player execute "/stats %player%"
+        else:
+            send "&l--- &c&lSTATS&rl ---"
+            send ""
+            set {_firstjoin} to {firstjoin::%arg 1%}
+            send "&lFirst joined:&r %{_firstjoin}%"
+            set {_race} to {race::%arg 1%}
+            send "&lRace:&r %{_race}%"
+            set {_res} to {resistance::%arg 1%}
+            set {_resp} to {resp::%arg 1%}
+            set {_str} to {strength::%arg 1%}
+            set {_killp} to {killp::%arg 1%}
+            send ""
+
+            # step 4: add stat and details
+            send "&lResistance"
+            send "Level: &c%{_res}%&r"
+            if {_resp} is 0:
+                send "&c□□□□□□□□□□"
+            else if {_resp} is 1:
+                send "&c■□□□□□□□□□"
+            else if {_resp} is 2:
+                send "&c■■□□□□□□□□"
+            else if {_resp} is 3:
+                send "&c■■■□□□□□□□"
+            else if {_resp} is 4:
+                send "&c■■■■□□□□□□□"
+            else if {_resp} is 5:
+                send "&c■■■■■□□□□□"
+            else if {_resp} is 6:
+                send "&c■■■■■■□□□□"
+            else if {_resp} is 7:
+                send "&c■■■■■■■□□□"
+            else if {_resp} is 8:
+                send "&c■■■■■■■■□□"
+            else if {_resp} is 9:
+                send "&c■■■■■■■■■□"
+
+            send ""
+            send "&lStrength"
+            send "Level: &c%{_str}%&r"
+            if {_killp} is 0:
+                send "&c□□□□□□□□□□"
+            else if {_killp} is 1:
+                send "&c■□□□□□□□□□"
+            else if {_killp} is 2:
+                send "&c■■□□□□□□□□"
+            else if {_killp} is 3:
+                send "&c■■■□□□□□□□"
+            else if {_killp} is 4:
+                send "&c■■■■□□□□□□□"
+            else if {_killp} is 5:
+                send "&c■■■■■□□□□□"
+            else if {_killp} is 6:
+                send "&c■■■■■■□□□□"
+            else if {_killp} is 7:
+                send "&c■■■■■■■□□□"
+            else if {_killp} is 8:
+                send "&c■■■■■■■■□□"
+            else if {_killp} is 9:
+                send "&c■■■■■■■■■□"
+            send ""
+
+            send "&lArchery"
+            send "Level: &c%{archery::%arg 1%}%"
+            if {_resp} is 0:
+                send "&c□□□□□□□□□□"
+            else if {_resp} is 1:
+                send "&c■■■□□□□□□□"
+            else if {_resp} is 2:
+                send "&c■■■■■■■□□□"
+
+            send ""
+            send "&lSpeed"
+            send "Level: &c%{speed::%arg 1%}%"
+            send ""
+
+            send "&lMagic"
+            send "Level: &c%{magic::%arg 1%}%"
+            if {magicp::%player%} is 0:
+                send "&c□□□□□□□□□□"
+            else if {magicp::%player%} is 1:
+                send "&c■□□□□□□□□□"
+            else if {magicp::%player%} is 2:
+                send "&c■■□□□□□□□□"
+            else if {magicp::%player%} is 3:
+                send "&c■■■□□□□□□□"
+            else if {magicp::%player%} is 4:
+                send "&c■■■■□□□□□□□"
+            else if {magicp::%player%} is 5:
+                send "&c■■■■■□□□□□"
+            else if {magicp::%player%} is 6:
+                send "&c■■■■■■□□□□"
+            else if {magicp::%player%} is 7:
+                send "&c■■■■■■■□□□"
+            else if {magicp::%player%} is 8:
+                send "&c■■■■■■■■□□"
+            else if {magicp::%player%} is 9:
+                send "&c■■■■■■■■■□"
+            send ""
+
+            send "&l-----------"
+
+command /tdconfirm:
+    trigger:
+        kill the player
+        send ""
+        send "&lYou died a total death!"
+        send "Your stats have been set to&c0&r."
+        send "Your race has been set to &chuman&r."
+        send ""
+        set {race::%player%} to "human"
+        set {resistance::%player%} to 0
+        set {strength::%player%} to 0
+        set {killp::%player%} to 0
+        set {resp::%player%} to 0
+        set {firstjoin::%player%} to now
+        set {stunned::%player%} to false
+        set {speed::%player%} to 0
+        set {archery::%player%} to 0
+
+command /setrace <player> <text>:
+    permission: op and console
+    trigger:
+        if arg 2 is "human":
+            set {race::%arg 1%} to "human"
+            make console execute "/pex user %arg 1% group set human"
+            make console execute "/pex user %arg 1% group remove dwarf"
+            make console execute "/pex user %arg 1% group remove orc"
+            make console execute "/pex user %arg 1% group remove goblin"
+        if arg 2 is "dwarf":
+            set {race::%arg 1%} to "dwarf"
+            make console execute "/pex user %arg 1% group remove human"
+            make console execute "/pex user %arg 1% group set dwarf"
+            make console execute "/pex user %arg 1% group remove orc"
+            make console execute "/pex user %arg 1% group remove goblin"
+        if arg 2 is "orc":
+            set {race::%arg 1%} to "orc"
+            make console execute "/pex user %arg 1% group remove human"
+            make console execute "/pex user %arg 1% group remove dwarf"
+            make console execute "/pex user %arg 1% group set orc"
+            make console execute "/pex user %arg 1% group remove goblin"
+        if arg 2 is "goblin":
+            set {race::%arg 1%} to "goblin"
+            make console execute "/pex user %arg 1% group remove human"
+            make console execute "/pex user %arg 1% group remove dwarf"
+            make console execute "/pex user %arg 1% group remove orc"
+            make console execute "/pex user %arg 1% group set goblin"
+
+command /setstat <player> <string> <integer> <integer>:
+    permission: op and console
+    trigger:
+        # step 5: add stat here
+        if arg 2 is "strength":
+            if arg 4 is between 0 and 9:
+                set {strength::%arg 1%} to arg 3
+                set {killp::%arg 1%} to arg 4
+        else if arg 2 is "resistance":
+            if arg 4 is between 0 and 5:
+                set {resistance::%arg 1%} to arg 3
+                set {resp::%arg 1%} to arg 4
+        else if arg 2 is "archery":
+            if arg 4 is between 0 and 2:
+                set {archery::%arg 1%} to arg 3
+                set {arcp::%arg 1%} to arg 4
+        else if arg 2 is "speed":
+            if arg 4 is not set:
+                set {speed::%player%} to arg 3
+        else if arg 2 is "magic":
+            if arg 4 is between 0 and 9:
+                set {magic::%arg 1%} to arg 3
+                set {magicp::%arg 1%} to arg 4
+        else:
+            send "&lThat is not a stat! Stats: strength, resistance."
+
+command /resourcepack:
+    trigger:
+        send resource pack from "https://www.dropbox.com/s/fcha1hwdrjg2aq9/Thalyrus%%20%%281.16%%29.zip?dl=1" to player
+
+on connect:
+    make player execute "/resourcepack"
+
+on consume:
+    if name of player's tool is "&lStrength Potion&a I":
+        add 0.1 to {strength::%player%}
+        apply strength 1 to the player for 3 seconds
+    else if name of player's tool is "&lStrength Potion&a II":
+        add 0.2 to {strength::%player%}
+        apply strength 1 to the player for 3 seconds
+    else if name of player's tool is "&lResistance Potion&a I":
+        add 0.1 to {resistance::%player%}
+        apply resistance 1 to the player for 3 seconds
+    else if name of player's tool is "&lResistance Potion&a II":
+        add 0.2 to {resistance::%player%}
+        apply resistance 1 to the player for 3 seconds
+command /givepotion <string> <integer> <player>:
+    permission: op
+    trigger:
+        if arg 3 is not set:
+            if arg 2 is 1:
+                give 1 honey bottle named "&l%arg 1% Potion&a I" to player
+            else if arg 2 is 2:
+                give 1 honey bottle named "&l%arg 1% Potion&a II" to player
+        else:
+            if arg 2 is 1:
+                give 1 honey bottle named "&l%arg 1% Potion&a I" to arg 3
+            else if arg 2 is 2:
+                give 1 honey bottle named "&l%arg 1% Potion&a II" to arg 3
+
+command /customitem <player> <text> <integer>:
+    aliases: /ci, /citem
+    permission: op
+    trigger:
+        if arg 3 is not set:
+            send "/customitem <player> <item> <amount>"
+        else:
+            if arg 2 is "bludgeon":
+                give arg 3 of wooden sword named "Bludgeon" to arg 1
+            else if arg 2 is "masse":
+                give arg 3 of stone axe named "Masse" to arg 1
+            else:
+                send "&lThat is not an item!"
+
+every 1 second:
+    loop all players:
+        if block under loop-value is iron bars:
+            damage the loop-value by 2 hearts
+
+command /sr:
+    permission: op and console
+    trigger:
+        make player execute "/skript reload diobraando"
+
+command /setspell [<string>]:
+    aliases: /ss
+    trigger:
+        if arg 1 is set:
+            set {_found} to false
+            loop {learnedspells::%player%::*}:
+                if loop-value is arg 1:
+                    set {spell::%player%} to arg 1
+                    send "&r&lSet your spell to &c%arg 1%&r&l!"
+                    set {_found} to true
+            if {_found} is false:
+                send "&lYou have not learned that spell!"
+            set {_found} to false
+        else:
+            send "&r&lYour selected spell is: &a%{spell::%player%}%&r&l!"
+
+command /learnspell <player> <text>:
+    permission: op and console
+    trigger:
+        set {_found} to false
+        loop {learnedspells::%arg 1%::*}:
+            if loop-value is arg 2:
+                set {_found} to true
+        if {_found} is false:
+            add arg 2 to {learnedspells::%arg 1%::*}
+            send "&a&c[!] &lYou learned the spell &c%arg 2%&r&l!" to arg 1
+        else:
+            send "&a&c[!] &lThe spellbook contained a spell you already know!"
+
+        
+        set {_found} to false
+
+command /unlearnspell <player> <text>:
+    permission: op and console
+    trigger:
+        remove arg 2 from {learnedspells::%arg 1%::*}
+        send "&a&c[!] &lYou forgot the spell &c%arg 2%&r&l!" to arg 1
+
+on rightclick holding stick:
+    if name of player's tool is "&c&lwand":
+        if {spell::%player%} is "fireball":
+            send "&lYou used the spell &cfireball&r&l!"
+            shoot a fireball from player at speed 2
+        else if {spell::%player%} is "snowstorm":
+            send "&lYou used the spell &csnowstorm&r&l!"
+            shoot a snowball from player at speed 4
+            wait 0.3 seconds
+            shoot a snowball from player at speed 4
+            wait 0.3 seconds
+            shoot a snowball from player at speed 4
+            wait 0.3 seconds
+            shoot a snowball from player at speed 4
+        else:
+            send "&lThat spell doesn't exist or is not for this wand!"
+
+on rightclick holding bone:
+    if name of player's tool is "&c&lwand":
+        if {spell::%player%} is "evocation":
+            send "&lYou used the spell &cevocation&r&l!"
+            shoot an egg from player at speed 2
+        else if {spell::%player%} is "heal":
+            loop all players where [distance between player and player input is smaller than 3]:
+                if {race::%loop-value%} is "orc" or "goblin":
+                    heal the loop-value by 2 hearts
+                else:
+                    damage the loop-value by 1 heart
+        else:
+            send "&lThat spell doesn't exist or is not for this wand!"
+
+on rightclick holding blaze rod:
+    if name of player's tool is "&l&cDark Wand":
+        if {spell::%player%} is "soul":
+            send "&lYou used the spell &csoul&r&l!"
+            shoot snowball from player at speed 2
+        else if {spell::%player%} is "necromancy":
+            send "&lYou used the spell &cnecromancy&r&l!"
+            if player's target is a player:
+                if health of player's target is less than 4:
+                    set {strength::%player's target%} to {strength::%player's target%}/2
+                    set {resistance::%player's target%} to {strength::%player's target%}/2
+                    set {magic::%player's target%} to {strength::%player's target%}/2
+                    set {archery::%player's target%} to {strength::%player's target%}/2
+                    heal player's target
+                    apply poison to the player for 100 seconds
+                    wait 100 seconds
+                    set {strength::%player's target%} to {strength::%player's target%}*2
+                    set {resistance::%player's target%} to {strength::%player's target%}*2
+                    set {magic::%player's target%} to {strength::%player's target%}*2
+                    set {archery::%player's target%} to {strength::%player's target%}*2
+        else:
+            send "&lThat spell doesn't exist or is not for this wand!"
+
+
+on damage:
+    projectile exists
+    projectile is a snowball
+    if attacker is a player:
+        if {spell::%attacker%} is "soul":
+            set {_dmgamount} to ceil(({magic::%attacker%} - {magic::%victim%} + 3)/2)
+            damage the victim by {_dmgamount} hearts
+
+on projectile hit:
+  if projectile is an egg:
+    loop blocks in radius 3 of block under event-location:
+      if loop-block is not air:
+        summon evoker fangs at loop-block
+
+command /wand <player>:
+    permission: op and console
+    trigger:
+        if arg 1 is not set:
+            make player execute "/wand %player%"
+        else:
+            set {_wand} to stick named "&c&lwand"
+            enchant {_wand} with knockback 1
+            give 1 of {_wand} to arg 1
+
+command /wand2 <player>:
+    permission: op and console
+    trigger:
+        if arg 1 is not set:
+            make player execute "/wand2 %player%"
+        else:
+            set {_wand} to bone named "&c&lwand"
+            enchant {_wand} with knockback 1
+            give 1 of {_wand} to arg 1
+
+command /spells:
+    trigger:
+        send ""
+        loop {learnedspells::%player%::*}:
+            send "- &l%loop-value%"
+        send ""
+
+command /discord:
+    trigger:
+        send ""
+        send "&r&lJoin our &aDiscord&r&l server!"
+        send "&r&c--> &r&a&lhttps://discord.gg/HcGGUyf &r&c<--"
+        send ""
+
+command /summon2 <string> <player>:
+    permission: op
+    trigger:
+        set {_sendmes} to true
+
+        if arg 1 is "werewolf" or "minecraft:werewolf":
+            if arg 2 is set:
+                spawn angry wolf at player
+                set last spawned wolf's name to "Werewolf"
+                set last spawned wolf's target to arg 2
+            else if arg 2 is not set:
+                spawn angry wolf at player
+                set last spawned wolf's name to "Werewolf"
+            set last spawned wolf's max health to 40
+            set last spawned wolf's health to 40
+        else:
+            set {_sendmes} to false
+            send "The entity couldn't be summoned!"
+
+
+
+        if {_sendmes} is true:
+            send "Summoned a(n) %arg 1% at %player's location%"
+
+        set {_sendmes} to true
+
+on tame:
+    if event-entity is a wolf:
+        if name of event-entity is "Werewolf":
+            cancel the event
+            set event-entity's target to player
+
+every 1 second:
+    loop all wolves:
+        if loop-value's max health is 40:
+            loop all players in radius 5 of the loop-value:
+                if loop-value-2's gamemode is survival:
+                    if {werewolf::%loop-value-2%} is false:
+                        set loop-value-1's target to loop-value-2
+
+command /dwand <player>:
+    permission: op and console
+    trigger:
+        set {_dwand} to blaze rod
+        enchant {_dwand} with knockback 1
+        give 1 of {_dwand} named "&l&cDark Wand" to arg 1
+
+on damage:
+    if attacker is a wolf:
+        if attacker's name is "Werewolf":
+            if victim is a player:
+                make console execute "/transform %victim%"
+
+command /transform:
+    trigger:
+        send "&lYou are transforming into a werewolf!" to player
+        set {werewolf::%player%} to true
+        hide the player from all players
+        set player's gamemode to spectator
+        spawn angry wolf at player
+        #set {_closestplayer} to player
+        #set {_closestdist} to 1000000
+        #loop all players:
+        #    if distance between loop-value and player is less than {_closestdist}:
+        #        set {_closestdist} to distance between loop-value and player
+        #        set {_closestplayer} to loop-value
+        #set last spawned wolf's target to {_closestplayer}
+        set last spawned wolf's name to "%player%"
+        set last spawned wolf's max health to 40
+        set last spawned wolf's health to 40
+        set {werewolf::%player%} to false
+        wait 20 seconds
+        kill the last spawned wolf
+        set player's gamemode to survival
+        send "&lYou are no longer a werewolf!" to player
+        set player's max health to 10
+        set player's health to 10
+        reveal the player to all players
+
+on spawn of a wolf:
+    if time in world is between 18:00 and 6:00:
+        chance of 40%:
+            cancel the event
+            spawn angry wolf at player
+            set last spawned wolf's name to "Werewolf"
+            set last spawned wolf's max health to 40
+            set last spawned wolf's health to 40
+
+every 0.05 seconds:
+    loop all wolves:
+        if loop-value's max health is 40:
+            if loop-value's name is not "Werewolf":
+                loop all players:
+                    if loop-value-2's name is loop-value-1's name:
+                        set {wolfplayer} to loop-value-2
+                teleport {wolfplayer} to loop-value
+                set {wolfplayer}'s max health to 40
+                set {wolfplayer}'s health to loop-value's health
+
+on any move:
+    if {werewolf::%player%} is true:
+        cancel the event
+        send "&lYou cannot control yourself! You are a werewolf!"
+
+on rightclick on bookshelf:
+    chance of ({magic::%player%})%:
+        send "&lYou found a spellbook!"
+        give 1 of written book named "&c&l&oSpellbook" to player
+
+on rightclick holding written book:
+    if name of player's tool is "&c&l&oSpellbook":
+        cancel the event
+        remove 1 of player's tool from player
+        set {_spellno} to a random integer between 1 and 6
+        if {_spellno} is 1:
+            make console execute "/learnspell %player% fireball"
+        else if {_spellno} is 2:
+            make console execute "/learnspell %player% snowstorm"
+        else if {_spellno} is 3:
+            make console execute "/learnspell %player% evocation"
+        else if {_spellno} is 4:
+            make console execute "/learnspell %player% heal"
+        else if {_spellno} is 5:
+            make console execute "/learnspell %player% soul"
+        else if {_spellno} is 6:
+            make console execute "/learnspell %player% necromancy"
+        else:
+            send "&c&lAn error occured!"
+
+command /mvtp <string> [<player>]:
+    permission: op
+    trigger:
+        if arg 2 is not set:
+            make player execute "/mvtp %arg 1% %player%"
+        else:
+            if arg 1 is "ul_server" or "server":
+                teleport the player to spawn of "ul_server"
+            else if arg 1 is "world":
+                teleport the player to spawn of "world"
+
+on chat:
+    if {td::%player%} is true:
+        cancel the event
+        if chat-message is "%player%":
+            make player execute "/tdconfirm"
+        else:
+            send "&lIncorrect IGN! Total death has been cancelled."
+    else if first character of message is "*":
+        cancel the event
+        if player is op:
+            set {_mess} to message
+            replace all "*" with "" in {_mess}
+            loop all players:
+                if loop-value is op:
+                    send "&l[OP Chat] &r%player%: %{_mess}%" to loop-value
+    else if chat-message is "TD" or "total death":
+        cancel the event
+        send ""
+        send "&lAre you sure you want to reset your character?"
+        send "&lThis will reset your inventory, race, and stats."
+        send "&lTo confirm, type your IGN in the chat:"
+        send ""
+        set {td::%player%} to true
+    else:
+        set {_chatmessage} to chat-message
+        replace all " " in {_chatmessage} with ""
+        if {_chatmessage} contains "OwO" or "UwU" or "0w0" or "@w@" or "OwU" or "Ow0" or "Ow@" or "UwO" or "Uw0" or "Uw@" or "0wO" or "0wU" or "0w@" or "@wO" or "@wU" or "@w0":
+            cancel the event
+            send "&cYour chat message has been blocked"
+        else:
+            set {_sections::*} to message split at " "
+            if first character of {_sections::1} is "@":
+                replace all "@" with "" in {_sections::1}
+                set {_pingplayer} to {_sections::1} parsed as player
+                if {_pingplayer} is online:
+                    remove {_sections::1} from {_sections::*}
+                    set {_message} to message
+                    replace all {_sections::1} with "&9&l%{_sections::1}%&r" in {_message}
+                    #play raw sound "block.note_block.pling" to {_pingplayer} with pitch 1.122462 volume 50
+                    #play raw sound "block.note_block.pling" to {_pingplayer} with pitch 1 volume 50
+                    play sound "block.note.pling" with volume 2 to the player
+                    set message to {_message}
+            
+                    
+every 1 second:
+    loop all players in world "ul_server":
+        set {_name} to uncolored name of loop-value's tool 
+        if {_name} is "I kal -esse i móre":
+            if {race::%loop-value%} is not "human":
+                apply wither to loop-value for 1 second
+    loop all players in world "world":
+        set {_name} to uncolored name of loop-value's tool
+        
+        if {_name} is "I kal -esse i móre":
+            if {race::%loop-value%} is not "human":
+                apply wither to the loop-value for 1 second
+
+command /buildtest <string> [<player>]:
+    aliases: /bt
+    trigger:
+        if arg 1 is "create":
+            if player is op:
+                set {bt::%arg 2%} to player's location
+                set {btallow::%arg 2%} to false 
+                add arg 2 to {btplayers::*}
+                send "&aSet &c%arg 2%'s &abuild test's location to &c%player's location%&a!"
+            else:
+                send "&cYou don't have enough permission to do that!"
+        else if arg 1 is "stop":
+            if player is op:
+                remove arg 2 from {btplayers::*}
+                send "&aRemoved &c%arg 2% &afrom the build testers!"
+            else:
+                send "&cYou don't have enough permission to do that!"
+        else if arg 1 is "move":
+            if player is op:
+                set {_found} to false
+                loop {btplayers::*}:
+                    if loop-value is arg 2:
+                        set {bt::%arg 2%} to player's location
+                        send "&aSet &c%arg 2%'s &abuild test's location to &c%player's location%&a!"
+                        set {_found} to true
+                if {_found} is false:
+                    send "&aThat player is not a build tester! Use &c/bt create <player>&a!"
+        else if arg 1 is "allowvisit":
+            if player is op:
+                set {_found} to false
+                loop {btplayers::*}:
+                    if loop-value is arg 2:
+                        set {btallow::%arg 2%} to true
+                        send "&aAllowed visitors for &c%arg 2%&a!"
+                        set {_found} to true
+            if {_found} is false:
+                send "&aThat player is not a build tester! Use &c/bt create <player>&a!"
+            else:
+                send "&cYou don't have enough permission to do that!"
+        else if arg 1 is "unallowvisit":
+            if player is op:
+                set {_found} to false
+                loop {btplayers::*}:
+                    if loop-value is arg 2:
+                        set {btallow::%arg 2%} to false
+                        send "&aUnallowed visitors for &c%arg 2%&a!"
+                        set {_found} to true
+            if {_found} is false:
+                send "&aThat player is not a build tester! Use &c/bt create <player>&a!"
+            else:
+                send "&cYou don't have enough permission to do that!"
+        else if arg 1 is "visit":
+            set {_found} to false
+            loop {btplayers::*}:
+                if loop-value is arg 2:
+                    set {_found} to true
+                    if {btallow::%loop-value%} is true:
+                        send "&aTeleporting to &c%loop-value%'s &abuild test!"
+                        teleport the player to {bt::%loop-value%}
+                    else:
+                        send "&aTeleporting to &c%loop-value%'s &abuild test is disabled!"
+            if {_found} is false:
+                send "&c%arg 2% &ais not a build tester!"
+        else if arg 1 is "list":
+            send ""
+            send "&l--- Build Testers ---"
+            loop {btplayers::*}:
+                set {_loc2} to {bt::%loop-value%}
+                send "- &c%loop-value% &a(%{_loc2}%)"
+            send "&l---------------------"
+            send ""
+        else if arg 2 is not set:
+            make player execute "/bt help help"
+        else:
+            send ""
+            send "&l--- Build Test ---"
+            if player is op:
+                send "&c[OP]&r /bt create <player> - Add player to the build testers and set their build location"
+                send "&c[OP]&r /bt stop <player> - Remove player from the build testers"
+                send "&c[OP]&r /bt move <player> - Move a player's build location"
+                send "&c[OP]&r /bt allowvisit <player> - Allow visiting a player's build location"
+                send "&c[OP]&r /bt unallowvisit <player> - Unallow visintg a player's build location"
+            send "&c[Default]&r /bt visit <player> - Visit a player's build location"
+            send "&c[Default]&r /bt help <player> - Show this help message"
+            send "&l------------------"
+            send ""
+                    
+command /newsk:
+    permission: op
+    trigger:
+        broadcast ""
+        broadcast "&r&l[!] &cNew &c&lSkript &r&cdetected! &aPlease update the &a&lSkript&r&a! &r&l[!]"  
+        broadcast ""       
+
+command /cchat:
+    permission: op and console
+    trigger:
+        loop 200 times:
+            broadcast ""
+        broadcast "&l%player% cleared the chat"
+
+command /announce <text>:
+    permission: op and console
+    trigger:
+        broadcast ""
+        broadcast ""
+        broadcast "&r[&l&6!&r] &c&lAnnounce&a&lment &r[&l&6!&r]"
+        broadcast "&r[&a%player%&r] %colored arg 1%"
+        broadcast ""
+        broadcast ""
